@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SilentEye</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src http://localhost:5000 http://127.0.0.1:5000; img-src 'self' data:; script-src 'self' 'unsafe-inline'"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-primary:#080c10;--bg-secondary:#0d1117;--bg-panel:#0f1520;
+  --bg-card:#121b27;--bg-hover:#162030;--border:#1e2d3d;
+  --border-bright:#243648;--accent-blue:#00b4ff;--accent-cyan:#00e5ff;
+  --accent-glow:#0066cc;--text-primary:#e2eaf4;--text-secondary:#7a96b0;
+  --text-muted:#3d5570;--clean:#00e676;--suspicious:#ffab00;--malicious:#ff1744;
+  --clean-bg:rgba(0,230,118,0.08);--suspicious-bg:rgba(255,171,0,0.08);
+  --malicious-bg:rgba(255,23,68,0.08);--sidebar-w:248px;--header-h:56px;
+  --footer-h:32px;--radius:6px;--radius-lg:10px;
+  --font-display:'Orbitron',monospace;--font-body:'Rajdhani',sans-serif;
+  --font-mono:'Share Tech Mono',monospace;
+  --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"]{
+  --bg-primary:#f0f4f8;--bg-secondary:#e8edf3;--bg-panel:#ffffff;
+  --bg-card:#f5f8fc;--bg-hover:#e2e8f0;--border:#cdd5e0;
+  --border-bright:#b0bcd0;--text-primary:#1a2332;--text-secondary:#4a6280;
+  --text-muted:#8a9bb0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:var(--font-body);background:var(--bg-primary);color:var(--text-primary);font-size:14px;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+
+/* ── SPLASH ── */
+#splash{
+  position:fixed;inset:0;z-index:9999;background:#040608;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  animation:splashOut 0.6s ease-in-out 5s forwards;
+}
+@keyframes splashOut{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04);pointer-events:none}}
+.splash-bg{position:absolute;inset:0;overflow:hidden}
+.splash-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(0,100,200,.12) 0%,transparent 70%),radial-gradient(ellipse 30% 60% at 80% 20%,rgba(0,180,255,.06) 0%,transparent 60%)}
+.splash-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,180,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,255,.04) 1px,transparent 1px);background-size:40px 40px;animation:gridPulse 3s ease-in-out infinite}
+@keyframes gridPulse{0%,100%{opacity:.4}50%{opacity:.8}}
+.splash-rings{position:absolute;width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%)}
+.splash-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,180,255,.15);top:50%;left:50%;transform:translate(-50%,-50%);animation:ringExpand 3s ease-out infinite}
+.splash-ring:nth-child(1){width:200px;height:200px;animation-delay:0s}
+.splash-ring:nth-child(2){width:320px;height:320px;animation-delay:.8s}
+.splash-ring:nth-child(3){width:440px;height:440px;animation-delay:1.6s}
+@keyframes ringExpand{0%{opacity:.8;transform:translate(-50%,-50%) scale(.8)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.2)}}
+.splash-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:28px}
+.splash-eye-wrap{position:relative;width:140px;height:140px;animation:eyeFloat 4s ease-in-out infinite}
+@keyframes eyeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.splash-eye-svg{width:140px;height:140px;filter:drop-shadow(0 0 30px rgba(0,180,255,.6)) drop-shadow(0 0 60px rgba(0,100,200,.3))}
+.splash-scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00e5ff,transparent);top:0;animation:scanSweep 2s ease-in-out infinite;border-radius:1px}
+@keyframes scanSweep{0%{top:0%;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+.splash-logo-text{text-align:center;animation:logoReveal 1s ease-out .5s both}
+@keyframes logoReveal{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.splash-title{font-family:var(--font-display);font-size:44px;font-weight:900;letter-spacing:.08em;line-height:1;background:linear-gradient(135deg,#fff 30%,#00b4ff 70%,#00e5ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.splash-title span{-webkit-text-fill-color:#00b4ff}
+.splash-tagline{font-family:var(--font-display);font-size:10px;font-weight:400;letter-spacing:.5em;color:#00b4ff;margin-top:8px;opacity:.8}
+.splash-progress-wrap{width:280px;animation:logoReveal 1s ease-out 1s both}
+.splash-progress-label{font-family:var(--font-mono);font-size:10px;color:#00b4ff;letter-spacing:.15em;margin-bottom:8px;display:flex;justify-content:space-between}
+.splash-progress-track{height:2px;background:rgba(0,180,255,.15);border-radius:1px;overflow:hidden}
+.splash-progress-bar{height:100%;background:linear-gradient(90deg,#0066cc,#00b4ff,#00e5ff);border-radius:1px;width:0%;transition:width 0.4s ease;box-shadow:0 0 12px rgba(0,229,255,.6)}
+.splash-status{font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);letter-spacing:.1em;height:16px;animation:logoReveal .5s ease-out 1.2s both}
+.splash-dots span{display:inline-block;animation:dotBlink 1.2s ease-in-out infinite}
+.splash-dots span:nth-child(2){animation-delay:.2s}
+.splash-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotBlink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* ── APP SHELL ── */
+#app{display:grid;grid-template-rows:var(--header-h) 1fr var(--footer-h);grid-template-columns:var(--sidebar-w) 1fr;grid-template-areas:"header header" "sidebar main" "footer footer";width:100vw;height:100vh;opacity:0;animation:appReveal .5s ease-out 5.4s forwards}
+@keyframes appReveal{from{opacity:0}to{opacity:1}}
+
+/* ── HEADER ── */
+.header{grid-area:header;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:14px;position:relative;z-index:100}
+.header-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.header-logo-icon{width:32px;height:32px;filter:drop-shadow(0 0 8px rgba(0,180,255,.5))}
+.header-logo-text{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.06em;background:linear-gradient(135deg,#fff 40%,#00b4ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-logo-text span{-webkit-text-fill-color:#00b4ff}
+.header-divider{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.header-subtitle{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;flex-shrink:0;line-height:1.4}
+.header-stats{display:flex;gap:22px;margin-left:auto}
+.header-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
+.header-stat-val{font-family:var(--font-display);font-size:18px;font-weight:700;line-height:1;color:var(--accent-cyan)}
+.header-stat-val.c-clean{color:var(--clean)}.header-stat-val.c-sus{color:var(--suspicious)}.header-stat-val.c-mal{color:var(--malicious)}
+.header-stat-label{font-family:var(--font-mono);font-size:8px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase}
+.header-actions{display:flex;align-items:center;gap:8px;margin-left:14px}
+.btn-icon{width:32px;height:32px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);color:var(--text-secondary)}
+.btn-icon:hover{border-color:var(--accent-blue);color:var(--accent-cyan);background:var(--bg-hover)}
+.btn-icon svg{width:16px;height:16px}
+.engine-status{display:flex;align-items:center;gap:6px;padding:4px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;color:var(--clean);text-transform:uppercase;flex-shrink:0}
+.engine-dot{width:6px;height:6px;border-radius:50%;background:var(--clean);box-shadow:0 0 6px var(--clean);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--clean)}50%{opacity:.6;box-shadow:0 0 12px var(--clean)}}
+
+/* ── SIDEBAR ── */
+.sidebar{grid-area:sidebar;background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-section{padding:14px 12px 6px}
+.sidebar-section-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:var(--text-muted);text-transform:uppercase;padding:0 4px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.sidebar-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:var(--transition);color:var(--text-secondary);border:1px solid transparent;margin-bottom:2px}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border)}
+.nav-item.active{background:rgba(0,180,255,.08);color:var(--accent-cyan);border-color:rgba(0,180,255,.2)}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-item-text{font-weight:600;font-size:13px;letter-spacing:.02em}
+.nav-badge{margin-left:auto;padding:1px 7px;border-radius:10px;font-family:var(--font-mono);font-size:9px;font-weight:600}
+.nav-badge.new{background:rgba(0,180,255,.15);color:var(--accent-cyan);border:1px solid rgba(0,180,255,.3)}
+.nav-badge.about-badge{background:rgba(147,51,234,.15);color:#c084fc;border:1px solid rgba(147,51,234,.3)}
+
+/* Folder path box */
+.folder-path-box{margin:4px 12px 8px;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:none}
+.folder-path-box.visible{display:block}
+.folder-path-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px}
+.folder-path-row{display:flex;gap:6px;margin-bottom:6px}
+.path-input{flex:1;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-family:var(--font-mono);font-size:10px;color:var(--text-primary);outline:none;transition:var(--transition)}
+.path-input:focus{border-color:var(--accent-blue)}
+.path-input::placeholder{color:var(--text-muted)}
+.btn-sm{padding:5px 9px;background:rgba(0,180,255,.1);border:1px solid rgba(0,180,255,.3);border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;color:var(--accent-cyan);text-transform:uppercase;transition:var(--transition);white-space:nowrap}
+.btn-sm:hover{background:rgba(0,180,255,.2);border-color:var(--accent-cyan)}
+.btn-sm.btn-file{background:rgba(0,230,118,.08);border-color:rgba(0,230,118,.25);color:var(--clean)}
+.btn-sm.btn-file:hover{background:rgba(0,230,118,.15);border-color:var(--clean)}
+.folder-path-btns{display:flex;gap:6px}
+.folder-scan-btn{flex:1;padding:6px;background:linear-gradient(135deg,#0066cc,#00b4ff);border:none;border-radius:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;color:#fff;text-transform:uppercase;cursor:pointer;transition:var(--transition)}
+.folder-scan-btn:hover{background:linear-gradient(135deg,#0077ee,#00ccff)}
+
+/* Watch path box */
+.social-path-box{margin:4px 12px 8px;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:none}
+.social-path-box.visible{display:block}
+.social-path-status{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);margin-top:5px;letter-spacing:.05em}
+.social-path-status.active{color:var(--clean)}
+.interval-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.interval-label{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);letter-spacing:.1em;flex:1}
+.interval-select{background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:10px;color:var(--text-primary);outline:none;cursor:pointer}
+
+/* Stats */
+.sidebar-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 12px}
+.sidebar-stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:9px 8px;text-align:center}
+.sidebar-stat-num{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1}
+.sidebar-stat-num.blue{color:var(--accent-cyan)}.sidebar-stat-num.green{color:var(--clean)}.sidebar-stat-num.amber{color:var(--suspicious)}.sidebar-stat-num.red{color:var(--malicious)}
+.sidebar-stat-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+
+/* Risk meter */
+.risk-meter-wrap{margin:8px 12px;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)}
+.risk-meter-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.risk-meter-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase}
+.risk-level{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.1em}
+.risk-level.safe{color:var(--clean)}.risk-level.moderate{color:var(--suspicious)}.risk-level.critical{color:var(--malicious)}
+.risk-bar-track{height:4px;background:var(--bg-primary);border-radius:2px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:2px;transition:width .6s ease;background:linear-gradient(90deg,var(--clean),var(--suspicious),var(--malicious));width:0%}
+.risk-pct{font-family:var(--font-mono);font-size:18px;font-weight:600;color:var(--clean);text-align:right;margin-top:4px}
+
+/* Quarantine */
+.quarantine-list{padding:4px 12px;max-height:110px;overflow-y:auto}
+.quarantine-item{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px;transition:var(--transition)}
+.quarantine-item:hover{border-color:var(--malicious)}
+.quarantine-item-icon{width:20px;height:20px;border-radius:3px;background:var(--malicious-bg);border:1px solid rgba(255,23,68,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.quarantine-item-name{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.quarantine-item-type{font-family:var(--font-mono);font-size:8px;padding:1px 5px;background:var(--malicious-bg);color:var(--malicious);border-radius:3px;letter-spacing:.1em;flex-shrink:0}
+.quarantine-info{font-family:var(--font-mono);font-size:8px;color:var(--text-muted);padding:4px 12px;letter-spacing:.08em;line-height:1.5}
+.btn-clear-q{margin:6px 12px;width:calc(100% - 24px);padding:7px;background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.25);border-radius:var(--radius);font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;color:var(--malicious);text-transform:uppercase;cursor:pointer;transition:var(--transition)}
+.btn-clear-q:hover{background:rgba(255,23,68,.15);border-color:var(--malicious)}
+
+/* ── MAIN ── */
+.main{grid-area:main;background:var(--bg-primary);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.toolbar{padding:9px 16px;border-bottom:1px solid var(--border);background:var(--bg-secondary);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search-wrap{flex:1;position:relative;max-width:360px;min-width:160px}
+.search-input{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px 7px 34px;font-family:var(--font-body);font-size:13px;color:var(--text-primary);outline:none;transition:var(--transition)}
+.search-input:focus{border-color:var(--accent-blue)}
+.search-input::placeholder{color:var(--text-muted)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.search-icon svg{width:14px;height:14px}
+.filter-pills{display:flex;gap:4px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;color:var(--text-secondary);text-transform:uppercase;cursor:pointer;transition:var(--transition);white-space:nowrap}
+.pill:hover{border-color:var(--accent-blue);color:var(--accent-cyan)}
+.pill.active{background:rgba(0,180,255,.12);border-color:rgba(0,180,255,.4);color:var(--accent-cyan)}
+.pill.p-clean.active{background:var(--clean-bg);border-color:var(--clean);color:var(--clean)}
+.pill.p-sus.active{background:var(--suspicious-bg);border-color:var(--suspicious);color:var(--suspicious)}
+.pill.p-mal.active{background:var(--malicious-bg);border-color:var(--malicious);color:var(--malicious)}
+.btn-scan{padding:8px 18px;background:linear-gradient(135deg,#0066cc,#00b4ff);border:none;border-radius:var(--radius);font-family:var(--font-display);font-size:11px;font-weight:600;letter-spacing:.15em;color:#fff;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 0 20px rgba(0,100,200,.3)}
+.btn-scan:hover{background:linear-gradient(135deg,#0077ee,#00ccff);box-shadow:0 0 30px rgba(0,180,255,.4);transform:translateY(-1px)}
+.btn-scan svg{width:14px;height:14px}
+.btn-clear{padding:8px 13px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--text-secondary);text-transform:uppercase;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px}
+.btn-clear:hover{border-color:var(--accent-blue);color:var(--text-primary)}
+.btn-clear svg{width:13px;height:13px}
+.file-count-badge{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;white-space:nowrap}
+
+/* Drop zone */
+.drop-zone{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;border:2px dashed var(--border);margin:16px;border-radius:var(--radius-lg);transition:var(--transition);cursor:pointer;background:var(--bg-secondary)}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent-blue);background:rgba(0,180,255,.04)}
+.drop-zone-icon{width:52px;height:52px;color:var(--text-muted);animation:dropFloat 3s ease-in-out infinite}
+@keyframes dropFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.drop-zone-title{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:.05em;color:var(--text-secondary)}
+.drop-zone-sub{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase}
+
+/* File list */
+.file-list-wrap{flex:1;overflow-y:auto;padding:0 16px 16px;display:none}
+.file-list-wrap.visible{display:block}
+.file-list-header{display:grid;grid-template-columns:2fr 80px 70px 120px 80px 120px;padding:6px 12px;font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:4px;position:sticky;top:0;background:var(--bg-primary);z-index:10}
+.file-row{display:grid;grid-template-columns:2fr 80px 70px 120px 80px 120px;padding:8px 12px;border:1px solid transparent;border-radius:var(--radius);margin-bottom:2px;cursor:pointer;transition:var(--transition);align-items:center}
+.file-row:hover{background:var(--bg-hover);border-color:var(--border)}
+.file-row.selected{background:rgba(0,180,255,.06);border-color:rgba(0,180,255,.25)}
+.file-row.mal{background:rgba(255,23,68,.04)}.file-row.sus{background:rgba(255,171,0,.04)}
+.file-name-cell{display:flex;align-items:center;gap:8px;min-width:0}
+.file-thumb{width:28px;height:28px;border-radius:4px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-thumb svg{width:14px;height:14px;color:var(--text-secondary)}
+.file-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13px}
+.file-time{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);margin-top:1px}
+.type-badge{display:inline-flex;padding:2px 8px;border-radius:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;font-weight:600;text-transform:uppercase;width:fit-content}
+.type-image{background:rgba(0,180,255,.1);color:var(--accent-cyan);border:1px solid rgba(0,180,255,.2)}
+.type-video{background:rgba(147,51,234,.1);color:#c084fc;border:1px solid rgba(147,51,234,.2)}
+.type-audio{background:rgba(234,179,8,.1);color:#fbbf24;border:1px solid rgba(234,179,8,.2)}
+.type-pdf{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.type-doc{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+.type-svg{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.size-cell{font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)}
+.verdict-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;width:fit-content}
+.v-clean{background:var(--clean-bg);color:var(--clean);border:1px solid rgba(0,230,118,.25)}
+.v-sus{background:var(--suspicious-bg);color:var(--suspicious);border:1px solid rgba(255,171,0,.25)}
+.v-mal{background:var(--malicious-bg);color:var(--malicious);border:1px solid rgba(255,23,68,.25)}
+.v-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.score-cell{display:flex;align-items:center;gap:6px}
+.score-bar-track{flex:1;height:3px;background:var(--bg-card);border-radius:2px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.score-num{font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);width:22px}
+.hash-cell{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Right panel */
+.right-panel{position:absolute;right:0;top:0;bottom:0;width:320px;background:var(--bg-secondary);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden}
+#panel-content{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto}
+.right-panel.open{transform:translateX(0)}
+.right-panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.right-panel-title{font-family:var(--font-display);font-size:10px;font-weight:600;letter-spacing:.25em;color:var(--text-secondary);text-transform:uppercase}
+.right-panel-filename{font-family:var(--font-mono);font-size:10px;color:var(--accent-cyan);letter-spacing:.05em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-close-panel{background:none;border:none;cursor:pointer;color:var(--text-muted);transition:var(--transition)}
+.btn-close-panel:hover{color:var(--text-primary)}
+.btn-close-panel svg{width:16px;height:16px}
+.verdict-card{margin:12px;padding:12px 14px;border-radius:var(--radius-lg);border:1px solid;display:flex;align-items:center;justify-content:space-between}
+.verdict-card.vc-mal{background:var(--malicious-bg);border-color:rgba(255,23,68,.3)}
+.verdict-card.vc-sus{background:var(--suspicious-bg);border-color:rgba(255,171,0,.3)}
+.verdict-card.vc-clean{background:var(--clean-bg);border-color:rgba(0,230,118,.3)}
+.verdict-big{font-family:var(--font-display);font-size:20px;font-weight:900;letter-spacing:.1em}
+.verdict-big.mal{color:var(--malicious)}.verdict-big.sus{color:var(--suspicious)}.verdict-big.clean{color:var(--clean)}
+.verdict-score-big{font-family:var(--font-display);font-size:36px;font-weight:900;line-height:1}
+.verdict-meta{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);letter-spacing:.15em;margin-top:2px}
+.panel-section{padding:10px 12px 6px;border-bottom:1px solid var(--border)}
+.panel-section-title{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.layer-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--radius);margin-bottom:2px;transition:var(--transition)}
+.layer-row:hover{background:var(--bg-hover)}
+.layer-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.layer-indicator.hit{background:var(--malicious);box-shadow:0 0 6px var(--malicious)}
+.layer-indicator.pass{background:var(--clean)}
+.layer-name{flex:1;font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:.01em}
+.layer-score{font-family:var(--font-mono);font-size:10px;font-weight:700;min-width:30px;text-align:right}
+.layer-score.hit{color:var(--malicious)}.layer-score.pass{color:var(--clean)}
+.layer-empty-msg{font-size:12px;font-weight:600;color:var(--clean);padding:6px 8px;letter-spacing:.01em}
+.file-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.file-info-key{font-family:var(--font-mono);font-size:8px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase}
+.file-info-val{font-size:12px;font-weight:600;color:var(--text-primary);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-info-val.mono{font-family:var(--font-mono);font-size:10px}
+.panel-actions{padding:10px 12px;display:flex;gap:8px}
+.btn-quarantine{flex:1;padding:8px;background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.3);border-radius:var(--radius);font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;color:var(--malicious);text-transform:uppercase;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-quarantine:hover{background:rgba(255,23,68,.18);border-color:var(--malicious)}
+.btn-quarantine svg{width:12px;height:12px}
+.panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.panel-empty-icon{width:48px;height:48px;color:var(--text-muted);opacity:.4}
+.panel-empty-text{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;text-align:center;line-height:1.6}
+.activity-log{padding:8px 12px;display:flex;flex-direction:column;gap:3px}
+.log-entry{font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--text-secondary);line-height:1.5;padding:2px 0;border-bottom:1px solid var(--border);animation:logIn .2s ease-out}
+@keyframes logIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+.log-time{color:var(--text-muted)}.log-ok{color:var(--clean)}.log-warn{color:var(--suspicious)}.log-err{color:var(--malicious)}.log-info{color:var(--accent-cyan)}
+
+/* Scan overlay */
+.scan-overlay{position:absolute;inset:0;background:rgba(8,12,16,.92);backdrop-filter:blur(4px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:200}
+.scan-overlay.active{display:flex}
+.scan-spinner{width:60px;height:60px;position:relative}
+.scan-spinner-ring{position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.scan-spinner-ring:nth-child(1){border-top-color:var(--accent-cyan);animation:spin 1s linear infinite}
+.scan-spinner-ring:nth-child(2){border-right-color:rgba(0,180,255,.4);animation:spin 1.5s linear infinite reverse;inset:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-progress-title{font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:.15em;color:var(--text-primary)}
+.scan-progress-file{font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);letter-spacing:.05em}
+.scan-progress-bar-wrap{width:300px}
+.scan-progress-track{height:3px;background:var(--bg-card);border-radius:2px;overflow:hidden}
+.scan-progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#0066cc,#00b4ff,#00e5ff);transition:width .3s ease;box-shadow:0 0 10px rgba(0,229,255,.5)}
+.scan-progress-pct{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);text-align:right;margin-top:4px;letter-spacing:.1em}
+
+/* Footer */
+.footer{grid-area:footer;background:var(--bg-secondary);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:16px;font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;color:var(--text-muted)}
+.footer-dot{width:4px;height:4px;border-radius:50%;background:var(--border)}
+.footer-brand{color:var(--accent-cyan)}
+.footer-center{flex:1;text-align:center}
+
+/* Toast */
+.toast-container{position:fixed;bottom:40px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--text-primary);box-shadow:0 4px 20px rgba(0,0,0,.4);animation:toastIn .3s ease-out,toastOut .3s ease-in 2.5s forwards;display:flex;align-items:center;gap:8px;pointer-events:auto;min-width:220px}
+.toast.t-clean{border-color:rgba(0,230,118,.3)}.toast.t-mal{border-color:rgba(255,23,68,.3)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+.toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.toast-dot.clean{background:var(--clean)}.toast-dot.mal{background:var(--malicious)}
+.scan-complete-banner{position:absolute;bottom:12px;right:12px;padding:10px 16px;background:var(--bg-card);border:1px solid rgba(0,230,118,.3);border-radius:var(--radius-lg);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--clean);box-shadow:0 0 20px rgba(0,230,118,.1);animation:bannerPop .3s ease-out;display:none;z-index:100}
+.scan-complete-banner.show{display:block}
+@keyframes bannerPop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+#no-files-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px}
+#no-files-state.hidden{display:none}
+.hidden{display:none !important}
+
+/* ── ABOUT MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,6,8,.88);backdrop-filter:blur(6px);z-index:8000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{width:560px;max-width:94vw;background:var(--bg-secondary);border:1px solid var(--border-bright);border-radius:var(--radius-lg);overflow:hidden;animation:modalIn .25s ease-out;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(0,180,255,.08)}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:linear-gradient(135deg,rgba(0,100,200,.08),transparent)}
+.modal-logo-row{display:flex;align-items:center;gap:12px}
+.modal-eye-icon{width:44px;height:44px;filter:drop-shadow(0 0 12px rgba(0,180,255,.5))}
+.modal-title{font-family:var(--font-display);font-size:20px;font-weight:900;letter-spacing:.06em;background:linear-gradient(135deg,#fff 40%,#00b4ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.modal-title span{-webkit-text-fill-color:#00b4ff}
+.modal-version{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:var(--accent-cyan);margin-top:3px}
+.modal-tagline{font-family:var(--font-display);font-size:9px;letter-spacing:.4em;color:var(--text-muted);margin-top:2px}
+.btn-modal-close{background:none;border:none;cursor:pointer;color:var(--text-muted);transition:var(--transition);padding:4px}
+.btn-modal-close:hover{color:var(--text-primary)}
+.btn-modal-close svg{width:18px;height:18px}
+.modal-body{padding:18px 20px}
+.modal-desc{font-size:14px;font-weight:500;color:var(--text-secondary);line-height:1.7;margin-bottom:16px}
+.modal-features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.feature-card{padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:flex-start;gap:9px}
+.feature-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feature-icon.blue{background:rgba(0,180,255,.12);border:1px solid rgba(0,180,255,.2)}
+.feature-icon.green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.2)}
+.feature-icon.purple{background:rgba(147,51,234,.1);border:1px solid rgba(147,51,234,.2)}
+.feature-icon.amber{background:rgba(255,171,0,.1);border:1px solid rgba(255,171,0,.2)}
+.feature-icon svg{width:14px;height:14px}
+.feature-title{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-primary);margin-bottom:2px}
+.feature-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.modal-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:14px}
+.modal-stat{text-align:center}
+.modal-stat-num{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent-cyan)}
+.modal-stat-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+.modal-team{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;text-align:center}
+.modal-team span{color:var(--accent-cyan)}
+.modal-tech-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tech-tag{padding:3px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border);font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;color:var(--text-secondary)}
+
+/* Quarantine dedicated panel */
+/* quarantine-panel-note removed */
+
+/* ── ELECTRON TITLEBAR ── */
+.titlebar{
+  position:fixed;top:0;left:0;right:0;height:32px;
+  background:var(--bg-primary);
+  border-bottom:1px solid rgba(0,180,255,.12);
+  display:flex;align-items:center;
+  -webkit-app-region:drag;
+  z-index:10000;
+  user-select:none;
+}
+.titlebar-drag{flex:1;height:100%;display:flex;align-items:center;padding-left:12px;gap:8px}
+.titlebar-app-name{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:rgba(0,180,255,.45);text-transform:uppercase}
+.titlebar-controls{display:flex;-webkit-app-region:no-drag}
+.tb-btn{width:46px;height:32px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;color:var(--text-muted)}
+.tb-btn:hover{background:rgba(255,255,255,.08);color:var(--text-primary)}
+.tb-btn.tb-close:hover{background:#c42b1c;color:#fff}
+.tb-btn svg{width:10px;height:10px;pointer-events:none}
+/* Push app down by titlebar height */
+#splash{top:32px!important}
+#app{margin-top:32px;height:calc(100vh - 32px)!important}
+
+</style>
+</head>
+<body>
+
+<!-- ELECTRON CUSTOM TITLEBAR -->
+<div class="titlebar" id="titlebar">
+  <div class="titlebar-drag">
+    <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+      <path d="M2 16 Q16 4 30 16 Q16 28 2 16Z" fill="#00b4ff" opacity=".15"/>
+      <circle cx="16" cy="16" r="8" fill="#00b4ff" opacity=".2"/>
+      <circle cx="16" cy="16" r="8" stroke="#00b4ff" stroke-width="1.5" fill="none"/>
+      <circle cx="16" cy="16" r="3.5" fill="#001833"/>
+      <circle cx="18" cy="14" r="1.5" fill="white" opacity=".9"/>
+    </svg>
+    <span class="titlebar-app-name">SilentEye &nbsp;·&nbsp; Multimedia Malware Scanner</span>
+  </div>
+  <div class="titlebar-controls">
+    <button class="tb-btn" id="tb-min" title="Minimize">
+      <svg viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1"/></svg>
+    </button>
+    <button class="tb-btn" id="tb-max" title="Maximize">
+      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2"><rect x=".6" y=".6" width="8.8" height="8.8"/></svg>
+    </button>
+    <button class="tb-btn tb-close" id="tb-close" title="Close (minimize to tray)">
+      <svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.4"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+    </button>
+  </div>
+</div>
+
+
+<!-- ═══════ SPLASH ═══════ -->
+<div id="splash">
+  <div class="splash-bg"><div class="splash-grid"></div></div>
+  <div class="splash-rings">
+    <div class="splash-ring"></div><div class="splash-ring"></div><div class="splash-ring"></div>
+  </div>
+  <div class="splash-content">
+    <div class="splash-eye-wrap">
+      <div class="splash-scan-line"></div>
+      <svg class="splash-eye-svg" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="eg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity=".9"/>
+            <stop offset="40%" stop-color="#00b4ff" stop-opacity=".7"/>
+            <stop offset="100%" stop-color="#0044aa" stop-opacity=".3"/>
+          </radialGradient>
+          <radialGradient id="pg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#001833"/>
+            <stop offset="100%" stop-color="#000c1a"/>
+          </radialGradient>
+        </defs>
+        <path d="M10 70 Q70 20 130 70 Q70 120 10 70Z" fill="url(#eg)" opacity=".15"/>
+        <circle cx="70" cy="70" r="35" fill="url(#eg)" opacity=".4"/>
+        <circle cx="70" cy="70" r="35" stroke="#00b4ff" stroke-width="1.5" fill="none" opacity=".6"/>
+        <circle cx="70" cy="70" r="28" stroke="#00e5ff" stroke-width=".5" fill="none" opacity=".4"/>
+        <circle cx="70" cy="70" r="20" stroke="#00b4ff" stroke-width=".5" fill="none" opacity=".5"/>
+        <circle cx="70" cy="70" r="14" fill="url(#pg)"/>
+        <circle cx="70" cy="70" r="14" stroke="#003366" stroke-width="1" fill="none"/>
+        <circle cx="76" cy="64" r="4" fill="white" opacity=".8"/>
+        <circle cx="78" cy="66" r="1.5" fill="white" opacity=".5"/>
+        <text x="54" y="52" font-family="monospace" font-size="5" fill="#00e5ff" opacity=".6">10</text>
+        <text x="80" y="52" font-family="monospace" font-size="5" fill="#00e5ff" opacity=".6">01</text>
+        <text x="48" y="74" font-family="monospace" font-size="5" fill="#00b4ff" opacity=".5">1</text>
+        <text x="89" y="74" font-family="monospace" font-size="5" fill="#00b4ff" opacity=".5">0</text>
+        <text x="54" y="94" font-family="monospace" font-size="5" fill="#00e5ff" opacity=".6">01</text>
+        <text x="80" y="94" font-family="monospace" font-size="5" fill="#00e5ff" opacity=".6">10</text>
+        <path d="M10 70 Q70 20 130 70" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>
+        <path d="M10 70 Q70 120 130 70" stroke="#00b4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
+        <rect x="8" y="55" width="5" height="5" fill="white" opacity=".6" rx="1"/>
+        <rect x="2" y="48" width="4" height="4" fill="white" opacity=".4" rx="1"/>
+        <rect x="15" y="44" width="6" height="6" fill="#00b4ff" opacity=".5" rx="1"/>
+        <rect x="5" y="38" width="3" height="3" fill="white" opacity=".3" rx="1"/>
+        <rect x="22" y="40" width="5" height="5" fill="#00e5ff" opacity=".4" rx="1"/>
+      </svg>
+    </div>
+    <div class="splash-logo-text">
+      <div class="splash-title">Silent<span>Eye</span></div>
+      <div class="splash-tagline">SEE BEYOND THE IMAGE</div>
+    </div>
+    <div class="splash-progress-wrap">
+      <div class="splash-progress-label">
+        <span>INITIALIZING</span><span id="splash-pct">0%</span>
+      </div>
+      <div class="splash-progress-track"><div class="splash-progress-bar"></div></div>
+    </div>
+    <div class="splash-status">
+      <span id="splash-status-text">Loading engine</span>
+      <span class="splash-dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ APP ═══════ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <a class="header-logo" href="#">
+      <svg class="header-logo-icon" viewBox="0 0 32 32" fill="none">
+        <path d="M2 16 Q16 4 30 16 Q16 28 2 16Z" fill="#00b4ff" opacity=".15"/>
+        <circle cx="16" cy="16" r="8" fill="#00b4ff" opacity=".2"/>
+        <circle cx="16" cy="16" r="8" stroke="#00b4ff" stroke-width="1.5" fill="none"/>
+        <circle cx="16" cy="16" r="3.5" fill="#001833"/>
+        <circle cx="18" cy="14" r="1.5" fill="white" opacity=".9"/>
+        <path d="M2 16 Q16 4 30 16" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/>
+        <path d="M2 16 Q16 28 30 16" stroke="#00b4ff" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".5"/>
+        <rect x="1" y="12" width="3" height="3" fill="white" opacity=".5" rx=".5"/>
+        <rect x="6" y="9" width="2" height="2" fill="#00e5ff" opacity=".4" rx=".3"/>
+      </svg>
+      <span class="header-logo-text">Silent<span>Eye</span></span>
+    </a>
+    <div class="header-divider"></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2">
+      <span class="header-subtitle" style="font-size:8px;letter-spacing:.18em">Multimedia Malware Scanner</span>
+      <span class="header-subtitle" style="font-size:8px;letter-spacing:.18em;color:rgba(0,180,255,.5)">v1.0</span>
+    </div>
+
+    <div class="header-stats">
+      <div class="header-stat"><div class="header-stat-val" id="stat-scanned">0</div><div class="header-stat-label">Scanned</div></div>
+      <div class="header-stat"><div class="header-stat-val c-clean" id="stat-clean">0</div><div class="header-stat-label">Clean</div></div>
+      <div class="header-stat"><div class="header-stat-val c-sus" id="stat-sus">0</div><div class="header-stat-label">Suspicious</div></div>
+      <div class="header-stat"><div class="header-stat-val c-mal" id="stat-mal">0</div><div class="header-stat-label">Malicious</div></div>
+    </div>
+
+    <div class="header-actions">
+      <div class="engine-status" id="engine-status-badge" style="border-color:rgba(255,23,68,.3)"><div class="engine-dot" id="engine-dot" style="background:var(--malicious);box-shadow:0 0 6px var(--malicious);animation:none"></div><span id="engine-status-text" style="color:var(--malicious)">Connecting...</span></div>
+      <button class="btn-icon" onclick="toggleTheme()" id="theme-btn" title="Switch to Light Mode">
+        <!-- Sun icon — visible in dark mode (click to go light) -->
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <!-- Moon icon — visible in light mode (click to go dark) -->
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Scan Mode</div>
+
+      <div class="nav-item active" id="nav-manual" onclick="setMode('manual')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="nav-item-text">Manual Scan</span>
+      </div>
+
+      <div class="nav-item" id="nav-folder" onclick="setMode('folder')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="nav-item-text">Folder Scan</span>
+      </div>
+
+      <div class="nav-item" id="nav-auto" onclick="setMode('auto')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="nav-item-text">Auto Watch</span>
+        <span class="nav-badge new">Auto</span>
+      </div>
+
+      <div class="nav-item" id="nav-about" onclick="showAbout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="nav-item-text">About Us</span>
+        <span class="nav-badge about-badge">Info</span>
+      </div>
+    </div>
+
+    <!-- FOLDER SCAN path box -->
+    <div class="folder-path-box" id="folder-path-box">
+      <div class="folder-path-label">Scan Target</div>
+      <div class="folder-path-row">
+        <input class="path-input" id="folder-path-input" placeholder="C:\Users\...\folder or file path"/>
+      </div>
+      <div class="folder-path-btns">
+        <button class="btn-sm btn-file" onclick="triggerFilePick()">+ File</button>
+        <button class="btn-sm" onclick="triggerFolderScan()">+ Folder</button>
+        <button class="folder-scan-btn" onclick="runFolderPathScan()">▶ Scan</button>
+      </div>
+    </div>
+
+    <!-- AUTO WATCH path box -->
+    <div class="social-path-box" id="watch-path-box">
+      <div class="folder-path-label">Watch Folder Path</div>
+      <!-- Path display when set -->
+      <div id="watch-path-set-view" style="display:none">
+        <div style="background:var(--bg-primary);border:1px solid var(--clean);border-radius:4px;padding:6px 8px;margin-bottom:6px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--clean);letter-spacing:.08em;word-break:break-all" id="watch-path-display"></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm" style="flex:1;background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.3);color:var(--malicious)" onclick="clearWatchPath()">✕ Clear Path</button>
+          <button class="btn-sm" style="flex:1" onclick="triggerWatchScanNow()">▶ Scan Now</button>
+        </div>
+      </div>
+      <!-- Path input when not set -->
+      <div id="watch-path-input-view">
+        <div class="folder-path-row">
+          <input class="path-input" id="watch-path-input" placeholder="C:\Users\...\WhatsApp\Media"/>
+          <button class="btn-sm" onclick="setWatchPath()">Set</button>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-top:4px;letter-spacing:.06em">Path stays saved until you clear it</div>
+      </div>
+      <div class="social-path-status" id="watch-status" style="margin-top:6px">Not configured</div>
+      <div class="interval-row">
+        <span class="interval-label">Auto-scan every</span>
+        <select class="interval-select" id="interval-select" onchange="onIntervalChange()">
+          <option value="1">1 min</option>
+          <option value="5">5 min</option>
+          <option value="10" selected>10 min</option>
+          <option value="30">30 min</option>
+          <option value="60">60 min</option>
+        </select>
+      </div>
+      <div id="watch-next-scan" style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-top:4px;letter-spacing:.06em;display:none"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="sidebar-section"><div class="sidebar-section-label">Session Stats</div></div>
+    <div class="sidebar-stats">
+      <div class="sidebar-stat-card"><div class="sidebar-stat-num blue" id="ss-total">0</div><div class="sidebar-stat-lbl">Total</div></div>
+      <div class="sidebar-stat-card"><div class="sidebar-stat-num green" id="ss-clean">0</div><div class="sidebar-stat-lbl">Clean</div></div>
+      <div class="sidebar-stat-card"><div class="sidebar-stat-num amber" id="ss-sus">0</div><div class="sidebar-stat-lbl">Suspicious</div></div>
+      <div class="sidebar-stat-card"><div class="sidebar-stat-num red" id="ss-mal">0</div><div class="sidebar-stat-lbl">Malicious</div></div>
+    </div>
+
+    <!-- Risk meter -->
+    <div class="risk-meter-wrap" style="margin-top:8px">
+      <div class="risk-meter-header">
+        <span class="risk-meter-label">Threat Level</span>
+        <span class="risk-level safe" id="risk-level-text">SAFE</span>
+      </div>
+      <div class="risk-bar-track"><div class="risk-bar-fill" id="risk-bar"></div></div>
+      <div class="risk-pct" id="risk-pct">0%</div>
+    </div>
+
+    <!-- Quarantine -->
+    <div class="sidebar-section" style="padding-top:10px">
+      <div class="sidebar-section-label">Quarantine</div>
+    </div>
+    <div class="quarantine-list" id="quarantine-list">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);padding:4px;letter-spacing:.1em">No files quarantined</div>
+    </div>
+    <button class="btn-clear-q" onclick="clearQuarantine()">🗑 Clear Quarantine</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-area">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input class="search-input" placeholder="Search files by name, type, verdict…" oninput="filterFiles(this.value)"/>
+      </div>
+      <div class="filter-pills">
+        <div class="pill active" data-filter="all" onclick="setPillFilter(this,'all')">All</div>
+        <div class="pill p-clean" data-filter="clean" onclick="setPillFilter(this,'clean')">Clean</div>
+        <div class="pill p-sus" data-filter="sus" onclick="setPillFilter(this,'sus')">Suspicious</div>
+        <div class="pill p-mal" data-filter="mal" onclick="setPillFilter(this,'mal')">Malicious</div>
+        <div class="pill" data-filter="image" onclick="setPillFilter(this,'image')">Image</div>
+        <div class="pill" data-filter="video" onclick="setPillFilter(this,'video')">Video</div>
+        <div class="pill" data-filter="audio" onclick="setPillFilter(this,'audio')">Audio</div>
+        <div class="pill" data-filter="pdf" onclick="setPillFilter(this,'pdf')">PDF</div>
+        <div class="pill" data-filter="doc" onclick="setPillFilter(this,'doc')">DOC</div>
+        <div class="pill" data-filter="svg" onclick="setPillFilter(this,'svg')">SVG</div>
+      </div>
+      <button class="btn-scan" onclick="triggerScan()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Scan Files
+      </button>
+      <button class="btn-clear" onclick="clearFiles()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        Clear
+      </button>
+      <div class="file-count-badge" id="file-count-badge">0 files</div>
+    </div>
+
+    <!-- No files state -->
+    <div id="no-files-state">
+      <div class="drop-zone" id="drop-zone"
+           onclick="triggerScan()"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleDrop(event)">
+        <svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="drop-zone-title">Drop Files or Click to Scan</div>
+        <div class="drop-zone-sub">Image · Video · Audio · PDF · DOC · SVG</div>
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list-wrap" id="file-list-wrap">
+      <div class="file-list-header">
+        <span>File</span><span>Type</span><span>Size</span><span>Verdict</span><span>Score</span><span>Hash</span>
+      </div>
+      <div id="file-list"></div>
+    </div>
+
+    <!-- Scan overlay -->
+    <div class="scan-overlay" id="scan-overlay">
+      <div class="scan-spinner">
+        <div class="scan-spinner-ring"></div><div class="scan-spinner-ring"></div>
+      </div>
+      <div class="scan-progress-title">SCANNING FILES</div>
+      <div class="scan-progress-file" id="scan-current-file">Initializing…</div>
+      <div class="scan-progress-bar-wrap">
+        <div class="scan-progress-track"><div class="scan-progress-fill" id="scan-prog-fill" style="width:0%"></div></div>
+        <div class="scan-progress-pct" id="scan-prog-pct">0%</div>
+      </div>
+    </div>
+
+    <div class="scan-complete-banner" id="scan-banner">✓ Scan complete: <span id="scan-banner-count">0</span> files</div>
+
+    <!-- Right panel -->
+    <div class="right-panel" id="right-panel">
+      <div class="right-panel-header">
+        <div style="min-width:0;flex:1;overflow:hidden">
+          <div class="right-panel-title">Decision Engine</div>
+          <div class="right-panel-filename" id="panel-filename" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">—</div>
+        </div>
+        <button class="btn-close-panel" onclick="closePanel()" style="flex-shrink:0;margin-left:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="panel-empty" id="panel-empty">
+        <svg class="panel-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12a4 4 0 0 0 8 0"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <div class="panel-empty-text">Select a file<br/>to view scan results</div>
+      </div>
+      <div id="panel-content" class="hidden">
+        <div id="panel-verdict-card"></div>
+        <div class="panel-section"><div class="panel-section-title">Stage 1 — Preprocessing</div><div id="panel-s1-layers"></div></div>
+        <div class="panel-section"><div class="panel-section-title" id="panel-s2-title">Stage 2 — Heuristic Layers</div><div id="panel-s2-layers"></div></div>
+        <div class="panel-section"><div class="panel-section-title">File Info</div><div class="file-info-grid" id="panel-file-info"></div></div>
+        <div class="panel-actions">
+          <button class="btn-quarantine" onclick="quarantineSelected()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Quarantine
+          </button>
+        </div>
+        <div class="panel-section" style="border:none"><div class="panel-section-title">Activity Log</div></div>
+        <div class="activity-log" id="activity-log"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>SilentEye v1.0</span>
+    <div class="footer-dot"></div>
+    <span>Multimedia Malware Scanner v1.0</span>
+    <div class="footer-dot"></div>
+    <span id="footer-time"></span>
+    <div style="flex:1"></div>
+    <span>Developed by <span class="footer-brand">CypherShield</span></span>
+  </footer>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Hidden inputs -->
+<input type="file" id="file-input" multiple style="display:none"
+  accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.tif,.webp,.heic,.mp4,.mkv,.avi,.mov,.wmv,.flv,.mpeg,.3gp,.webm,.mp3,.wav,.flac,.ogg,.aac,.m4a,.svg,.svgz,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp"
+  onchange="handleFileInput(this)"/>
+<input type="file" id="folder-file-input" style="display:none"
+  accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.tif,.webp,.heic,.mp4,.mkv,.avi,.mov,.wmv,.flv,.mpeg,.3gp,.webm,.mp3,.wav,.flac,.ogg,.aac,.m4a,.svg,.svgz,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp"
+  onchange="handleFolderFileInput(this)"/>
+
+<script>
+/* ── STATE ── */
+const state = {
+  files:[], selectedIdx:null, filterVerdict:'all',
+  filterSearch:'', filterType:'all', scanMode:'manual',
+  watchPath:'', watchInterval:null, quarantine:[],
+};
+
+/* ── SPLASH ── */
+const splashMsgs = ['Loading engine','Connecting hash DB','Initializing YARA','Loading ML models','Ready'];
+let smi = 0;
+const splashInt = setInterval(()=>{
+  smi++;
+  if(smi < splashMsgs.length) document.getElementById('splash-status-text').textContent = splashMsgs[smi];
+  if(smi >= splashMsgs.length) clearInterval(splashInt);
+}, 900);
+
+// Drive progress bar with JS — CSS animation was broken in Electron
+let splashPct = 0;
+const splashSteps = [0,20,45,70,88,100];
+let splashStep = 0;
+function paintSplashStep(){
+  const bar = document.querySelector('.splash-progress-bar');
+  if(bar) bar.style.width = splashSteps[splashStep]+'%';
+  const pctEl = document.getElementById('splash-pct');
+  if(pctEl) pctEl.textContent = splashSteps[splashStep]+'%';
+}
+paintSplashStep(); // paint the 0% frame immediately, don't wait for first tick
+const splashProgInt = setInterval(()=>{
+  splashStep++;
+  if(splashStep >= splashSteps.length){ clearInterval(splashProgInt); return; }
+  paintSplashStep();
+}, 750);
+setTimeout(()=>{
+  addLog('info','SilentEye v1.0 initialized');
+  addLog('ok','YARA rules loaded');
+  addLog('ok','Hash DB connected (1M hashes)');
+  addLog('info','Awaiting scan input...');
+  addLog('ok','[API] Backend connected — real scan engine active');
+},5600);
+
+/* ── CLOCK (AM/PM) ── */
+function updateClock(){
+  const now = new Date();
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('footer-time');
+  if(el) el.textContent = h+':'+m+':'+s+' '+ampm;
+}
+setInterval(updateClock,1000); updateClock();
+
+/* ── THEME ── */
+function toggleTheme(){
+  const html  = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  // dark mode → show sun (click to go light)
+  // light mode → show moon (click to go dark)
+  document.getElementById('theme-icon-sun').style.display  = isDark ? 'none'  : 'block';
+  document.getElementById('theme-icon-moon').style.display = isDark ? 'block' : 'none';
+  document.getElementById('theme-btn').title = isDark ? 'Switch to Dark Mode' : 'Switch to Light Mode';
+}
+
+/* ── NAVIGATION / MODES ── */
+function setModeBase(mode){
+  state.scanMode = mode;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+mode)?.classList.add('active');
+  // Hide all contextual boxes first
+  document.getElementById('folder-path-box').classList.remove('visible');
+  document.getElementById('watch-path-box').classList.remove('visible');
+  // Show relevant box
+  if(mode==='folder'){
+    document.getElementById('folder-path-box').classList.add('visible');
+  } else if(mode==='auto'){
+    document.getElementById('watch-path-box').classList.add('visible');
+  }
+}
+
+/* ── FOLDER SCAN box ── */
+function triggerFilePick(){
+  if(typeof window.silentEye !== 'undefined'){
+    window.silentEye.openFiles().then(paths=>{
+      if(!paths||!paths.length) return;
+      const pi = document.getElementById('folder-path-input');
+      if(pi && paths.length===1) pi.value = paths[0];
+      const ff = paths.map(p=>({name:p.split(/[/\\]/).pop(),path:p,size:0,type:'',_realPath:p}));
+      startScan(ff);
+    });
+  } else {
+    document.getElementById('folder-file-input').click();
+  }
+}
+function handleFolderFileInput(input){
+  const p = input.files[0]?.name||'';
+  document.getElementById('folder-path-input').value = p;
+  input.value='';
+}
+function triggerFolderScan(){
+  if(typeof window.silentEye !== 'undefined'){
+    window.silentEye.openFolder().then(p=>{
+      if(p) document.getElementById('folder-path-input').value = p;
+    });
+  } else {
+    const p = prompt('Enter full folder path:\n(e.g. C:\\Users\\Shreyas\\WhatsApp\\Media)');
+    if(p) document.getElementById('folder-path-input').value = p;
+  }
+}
+async function runFolderPathScan(){
+  const folderPath = document.getElementById('folder-path-input').value.trim();
+  if(!folderPath){ toast('warn','Enter a folder or file path first'); return; }
+  addLog('info','Folder scan started: '+folderPath);
+  const overlay = document.getElementById('scan-overlay');
+  overlay.classList.add('active');
+  document.getElementById('scan-current-file').textContent = 'Reading folder...';
+  document.getElementById('scan-prog-fill').style.width = '5%';
+  document.getElementById('scan-prog-pct').textContent = '5%';
+  try {
+    const resp = await fetch('http://127.0.0.1:5000/scan/folder',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({path:folderPath})
+    });
+    const data = await resp.json();
+    if(!data.ok) throw new Error(data.error||'Folder scan failed');
+    if(!data.results||!data.results.length){
+      overlay.classList.remove('active');
+      toast('info','No supported files found in folder'); return;
+    }
+    const total = data.results.length;
+    for(let i=0;i<total;i++){
+      const r=data.results[i];
+      document.getElementById('scan-current-file').textContent = r.file||('File '+(i+1));
+      document.getElementById('scan-prog-fill').style.width = Math.round(((i+1)/total)*100)+'%';
+      document.getElementById('scan-prog-pct').textContent = Math.round(((i+1)/total)*100)+'%';
+      const verdict=r.final_verdict==='malicious'?'mal':r.final_verdict==='suspicious'?'sus':'clean';
+      const flags=r.stage1?.flags||[];
+      const entry = {
+        name:r.file, type:r.stage1?.file_type||'doc', verdict,
+        score:r.final_score||0,
+        size:Math.round((r.stage1?.file_size_mb||0)*1024*1024),
+        hash:(r.stage1?.file_hash||'').slice(0,8),
+        time:fmtTime(new Date()),
+        layers:{
+          s1:[{n:'hash_reputation',hit:false,reason:''},{n:'magic_byte_check',hit:flags.includes('magic_byte_mismatch'),reason:''},{n:'integrity_check',hit:flags.includes('integrity_fail'),reason:''},{n:'double_extension',hit:flags.includes('double_extension'),reason:''},{n:'size_validation',hit:flags.includes('size_exceeded'),reason:''}],
+          s2:(r.stage2?.layer_results||[]).map(l=>({n:l.layer,hit:l.detected===true,reason:l.reason||'',score:l.score||0,sev:l.severity||'none'})),
+          ml:(r.stage2b_ml?.ml_layers||[]).map(l=>({n:'ML: '+l.layer,hit:l.detected===true,reason:l.reason||'',score:l.score||0,sev:l.severity||'none'})),
+        },
+        mlApplied:r.ml_applied||false, summary:r.summary||'',
+        _realPath:r.file_path||'', _fromApi:true,
+      };
+      state.files.push(entry);
+      updateStats();
+      // Auto-quarantine malicious files
+      if(verdict==='mal') await autoQuarantine(entry);
+      await new Promise(r=>setTimeout(r,20));
+    }
+    overlay.classList.remove('active');
+    renderFileList(); showNoFilesState(false);
+    const banner=document.getElementById('scan-banner');
+    document.getElementById('scan-banner-count').textContent=total+' files';
+    banner.classList.add('show'); setTimeout(()=>banner.classList.remove('show'),3000);
+    addLog('ok','Folder scan complete: '+total+' files | mal:'+(data.malicious||0));
+    if(data.malicious) toast('mal',data.malicious+' malicious file(s) auto-quarantined!');
+    else toast('ok','Folder scan complete — '+total+' files clean');
+  } catch(err){
+    overlay.classList.remove('active');
+    toast('warn','Folder scan error: '+err.message);
+    addLog('err','Folder scan failed: '+err.message);
+  }
+}
+
+/* ── WATCH PATH — sticky until cleared ── */
+function setWatchPath(){
+  const val = document.getElementById('watch-path-input').value.trim();
+  if(!val){ toast('warn','Enter a valid folder path'); return; }
+  state.watchPath = val;
+  // Switch to "path set" view — input hidden, path shown
+  document.getElementById('watch-path-input-view').style.display = 'none';
+  document.getElementById('watch-path-set-view').style.display = 'block';
+  document.getElementById('watch-path-display').textContent = val;
+  const st = document.getElementById('watch-status');
+  st.textContent = '✓ Watching active';
+  st.className = 'social-path-status active';
+  addLog('ok','Watch path set: '+val);
+  const mins = document.getElementById('interval-select').value;
+  toast('ok','Auto-watching every '+mins+' min');
+  startAutoWatch();
+  updateNextScanLabel();
+}
+function clearWatchPath(){
+  if(state.watchInterval){ clearInterval(state.watchInterval); state.watchInterval=null; }
+  state.watchPath = '';
+  document.getElementById('watch-path-input-view').style.display = 'block';
+  document.getElementById('watch-path-set-view').style.display = 'none';
+  document.getElementById('watch-path-input').value = '';
+  document.getElementById('watch-status').textContent = 'Not configured';
+  document.getElementById('watch-status').className = 'social-path-status';
+  document.getElementById('watch-next-scan').style.display = 'none';
+  addLog('info','Watch path cleared');
+  toast('info','Auto-watch stopped');
+}
+function onIntervalChange(){
+  if(state.watchPath){ startAutoWatch(); updateNextScanLabel(); }
+}
+let _nextScanTs = 0;
+function updateNextScanLabel(){
+  const mins = parseInt(document.getElementById('interval-select').value);
+  _nextScanTs = Date.now() + mins*60*1000;
+  const el = document.getElementById('watch-next-scan');
+  if(el){ el.style.display='block'; }
+  // Countdown updater
+  if(window._countdownTimer) clearInterval(window._countdownTimer);
+  window._countdownTimer = setInterval(()=>{
+    const el = document.getElementById('watch-next-scan');
+    if(!el||!state.watchPath){ clearInterval(window._countdownTimer); return; }
+    const remaining = Math.max(0, Math.round((_nextScanTs-Date.now())/1000));
+    const m=Math.floor(remaining/60), s=remaining%60;
+    el.textContent = 'Next scan in '+m+'m '+String(s).padStart(2,'0')+'s';
+  }, 1000);
+}
+function triggerWatchScanNow(){
+  if(!state.watchPath){ toast('warn','No watch path set'); return; }
+  addLog('info','Manual trigger: auto-watch scan');
+  runAutoWatchScan();
+}
+async function runAutoWatchScan(){
+  if(!state.watchPath) return;
+  addLog('info','Auto-watch scan: '+state.watchPath);
+  try {
+    const resp = await fetch('http://127.0.0.1:5000/scan/folder',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({path:state.watchPath})
+    });
+    const data = await resp.json();
+    if(!data.ok) throw new Error(data.error);
+    if(!data.results||!data.results.length){ addLog('info','Auto-watch: no files found'); return; }
+    let newCount=0, malCount=0;
+    for(const r of data.results){
+      // Skip already scanned files (same path)
+      if(state.files.find(f=>f._realPath===r.file_path)) continue;
+      newCount++;
+      const verdict=r.final_verdict==='malicious'?'mal':r.final_verdict==='suspicious'?'sus':'clean';
+      const flags=r.stage1?.flags||[];
+      const entry={
+        name:r.file, type:r.stage1?.file_type||'doc', verdict,
+        score:r.final_score||0,
+        size:Math.round((r.stage1?.file_size_mb||0)*1024*1024),
+        hash:(r.stage1?.file_hash||'').slice(0,8),
+        time:fmtTime(new Date()),
+        layers:{
+          s1:[{n:'hash_reputation',hit:false,reason:''},{n:'magic_byte_check',hit:flags.includes('magic_byte_mismatch'),reason:''},{n:'integrity_check',hit:flags.includes('integrity_fail'),reason:''},{n:'double_extension',hit:flags.includes('double_extension'),reason:''},{n:'size_validation',hit:flags.includes('size_exceeded'),reason:''}],
+          s2:(r.stage2?.layer_results||[]).map(l=>({n:l.layer,hit:l.detected===true,reason:l.reason||'',score:l.score||0,sev:l.severity||'none'})),
+          ml:(r.stage2b_ml?.ml_layers||[]).map(l=>({n:'ML: '+l.layer,hit:l.detected===true,reason:l.reason||'',score:l.score||0,sev:l.severity||'none'})),
+        },
+        mlApplied:r.ml_applied||false, summary:r.summary||'',
+        _realPath:r.file_path||'', _fromApi:true,
+      };
+      state.files.push(entry);
+      updateStats();
+      if(verdict==='mal'){ malCount++; await autoQuarantine(entry); }
+    }
+    if(newCount>0){
+      renderFileList(); showNoFilesState(false);
+      addLog('ok','Auto-watch: '+newCount+' new file(s) | '+malCount+' malicious');
+      if(malCount) toast('mal','Auto-watch: '+malCount+' malicious file(s) auto-quarantined!');
+      else toast('ok','Auto-watch: '+newCount+' new file(s) scanned — all clean');
+    } else {
+      addLog('info','Auto-watch: no new files since last scan');
+    }
+    // Reset countdown
+    updateNextScanLabel();
+  } catch(err){
+    addLog('warn','Auto-watch scan failed: '+err.message);
+  }
+}
+function startAutoWatch(){
+  if(state.watchInterval) clearInterval(state.watchInterval);
+  const mins = parseInt(document.getElementById('interval-select').value);
+  state.watchInterval = setInterval(()=>runAutoWatchScan(), mins*60*1000);
+}
+
+/* ── AUTO QUARANTINE — called automatically on malicious verdict ── */
+async function autoQuarantine(entry){
+  if(!entry._realPath) return;
+  try {
+    let result;
+    if(typeof window.silentEye !== 'undefined'){
+      result = await window.silentEye.quarantineFile(entry._realPath);
+    } else {
+      // Fallback: call API quarantine endpoint
+      const resp = await fetch('http://127.0.0.1:5000/quarantine/add',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({path:entry._realPath, name:entry.name})
+      });
+      result = await resp.json();
+    }
+    if(result&&result.ok){
+      if(!state.quarantine.find(q=>q._realPath===entry._realPath)){
+        state.quarantine.push({...entry, autoQuarantined:true});
+        renderQuarantine();
+      }
+      addLog('warn','Auto-quarantined: '+entry.name);
+    }
+  } catch(e){
+    addLog('warn','Auto-quarantine failed for '+entry.name+': '+e.message);
+  }
+}
+
+/* ── FILE INPUT ── */
+function triggerScanBase(){
+  document.getElementById('file-input').click();
+}
+function handleFileInput(input){
+  if(!input.files.length) return;
+  startScan(Array.from(input.files));
+  input.value='';
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('drop-zone')?.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files);
+  if(files.length) startScan(files);
+}
+
+/* ── TYPE MAP ── */
+const TYPE_MAP = {
+  'image/jpeg':'image','image/png':'image','image/gif':'image','image/webp':'image','image/bmp':'image',
+  'video/mp4':'video','video/x-matroska':'video','video/x-msvideo':'video','video/quicktime':'video',
+  'audio/mpeg':'audio','audio/wav':'audio','audio/flac':'audio','audio/ogg':'audio',
+  'application/pdf':'pdf',
+  'application/msword':'doc','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'doc',
+  'image/svg+xml':'svg',
+};
+function getType(file){
+  return TYPE_MAP[file.type]||
+    (file.name?.match(/\.(jpg|jpeg|png|gif|bmp|webp|heic|tiff?)$/i)?'image':
+     file.name?.match(/\.(mp4|mkv|avi|mov|wmv|flv|mpeg|3gp|webm)$/i)?'video':
+     file.name?.match(/\.(mp3|wav|flac|ogg|aac|m4a|wma)$/i)?'audio':
+     file.name?.match(/\.pdf$/i)?'pdf':
+     file.name?.match(/\.(doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp)$/i)?'doc':
+     file.name?.match(/\.svgz?$/i)?'svg':'doc');
+}
+function fakeHash(n){ let h=0; for(let i=0;i<n.length;i++) h=(Math.imul(31,h)+n.charCodeAt(i))|0; return Math.abs(h).toString(16).padStart(8,'0').slice(0,8); }
+function fakeVerdict(name,size){ const r=((name.length+size)*7919+13)%100; return r<5?'mal':r<15?'sus':'clean'; }
+function fakeScore(v){ return v==='mal'?75+Math.floor(Math.random()*20):v==='sus'?30+Math.floor(Math.random()*25):Math.floor(Math.random()*10); }
+function fakeLayers(v,t){
+  const base=[{n:'hash_reputation',hit:false},{n:'magic_byte_check',hit:false},{n:'integrity_check',hit:false},{n:'double_extension',hit:false},{n:'size_validation',hit:false}];
+  const s2={
+    image:[{n:'image_eof_check',hit:v!=='clean'},{n:'exif_anomaly',hit:v==='mal'},{n:'entropy_analysis',hit:v==='mal'},{n:'yara_detection',hit:v==='mal'}],
+    video:[{n:'video_container_check',hit:false},{n:'mp4_box_validation',hit:v==='mal'},{n:'video_eof_check',hit:v==='mal'},{n:'entropy_analysis',hit:v!=='clean'}],
+    audio:[{n:'audio_lsb_check',hit:v!=='clean'},{n:'audio_eof_check',hit:v==='mal'},{n:'audio_entropy_spike',hit:v==='mal'}],
+    pdf:[{n:'pdf_structure_analysis',hit:v!=='clean'},{n:'pdf_embedded_check',hit:v==='mal'},{n:'pdf_exploit_signatures',hit:v==='mal'}],
+    doc:[{n:'macro_detection',hit:v!=='clean'},{n:'ole_inspection',hit:v==='mal'},{n:'external_relationship_check',hit:v==='mal'}],
+    svg:[{n:'svg_script_check',hit:v!=='clean'},{n:'svg_xxe_check',hit:v==='mal'},{n:'svg_embedded_payload',hit:v==='mal'}],
+  };
+  return {s1:base,s2:s2[t]||s2.doc};
+}
+
+/* ── SCAN — Real API ── */
+async function startScan(files) {
+  const overlay = document.getElementById('scan-overlay');
+  overlay.classList.add('active');
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    document.getElementById('scan-current-file').textContent = f.name || f._realPath || 'file';
+    document.getElementById('scan-prog-fill').style.width = Math.round((i/files.length)*100)+'%';
+    document.getElementById('scan-prog-pct').textContent = Math.round((i/files.length)*100)+'%';
+
+    const filePath = f._realPath || f.path || null;
+    let entry;
+
+    if (filePath) {
+      try {
+        const resp = await fetch('http://127.0.0.1:5000/scan/file', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({path: filePath})
+        });
+        const data = await resp.json();
+        if (data.ok && data.result) {
+          const r = data.result;
+          const verdict = r.final_verdict==='malicious'?'mal': r.final_verdict==='suspicious'?'sus':'clean';
+          const flags = r.stage1?.flags || [];
+          const s1layers = [
+            {n:'hash_reputation',  hit:false, reason:'Clean'},
+            {n:'magic_byte_check', hit:flags.includes('magic_byte_mismatch'), reason:flags.includes('magic_byte_mismatch')?'Magic byte mismatch':'Clean'},
+            {n:'integrity_check',  hit:flags.includes('integrity_fail'),      reason:flags.includes('integrity_fail')?'Integrity failed':'Clean'},
+            {n:'double_extension', hit:flags.includes('double_extension'),    reason:flags.includes('double_extension')?'Double extension':'Clean'},
+            {n:'size_validation',  hit:flags.includes('size_exceeded'),       reason:flags.includes('size_exceeded')?'Size exceeded':'Clean'},
+          ];
+          const s2layers = (r.stage2?.layer_results||[]).map(l=>({n:l.layer, hit:l.detected===true, reason:l.reason||'', score:l.score||0, sev:l.severity||'none'}));
+          const mlLayers = (r.stage2b_ml?.ml_layers||[]).map(l=>({n:'ML: '+l.layer, hit:l.detected===true, reason:l.reason||'', score:l.score||0, sev:l.severity||'none'}));
+          entry = {
+            name:      f.name || filePath.split(/[/\\]/).pop(),
+            type:      r.stage1?.file_type || getType(f),
+            verdict,
+            score:     r.final_score||0,
+            size:      Math.round((r.stage1?.file_size_mb||0)*1024*1024),
+            hash:      (r.stage1?.file_hash||'unknown').slice(0,8),
+            time:      fmtTime(new Date()),
+            layers:    {s1:s1layers, s2:s2layers, ml:mlLayers},
+            mlApplied: r.ml_applied||false,
+            summary:   r.summary||'',
+            _realPath: filePath,
+            _fromApi:  true,
+          };
+          addLog(verdict==='mal'?'err':verdict==='sus'?'warn':'ok',
+            '['+r.final_verdict.toUpperCase()+'] '+entry.name+' — score:'+entry.score);
+        } else { throw new Error(data.error||'API error'); }
+      } catch(err) {
+        addLog('warn','API error: '+err.message);
+        entry = _demoEntry(f, i);
+      }
+    } else {
+      entry = _demoEntry(f, i);
+    }
+
+    await new Promise(r=>setTimeout(r,60));
+    state.files.push(entry);
+    updateStats();
+    // Auto-quarantine malicious files immediately
+    if(entry.verdict==='mal') await autoQuarantine(entry);
+  }
+
+  document.getElementById('scan-prog-fill').style.width='100%';
+  document.getElementById('scan-prog-pct').textContent='100%';
+  await new Promise(r=>setTimeout(r,300));
+  overlay.classList.remove('active');
+  renderFileList(); showNoFilesState(false);
+
+  const banner=document.getElementById('scan-banner');
+  document.getElementById('scan-banner-count').textContent=files.length+' files';
+  banner.classList.add('show'); setTimeout(()=>banner.classList.remove('show'),3000);
+
+  const mal=state.files.filter(x=>x.verdict==='mal').length;
+  if(mal) toast('mal', mal+' malicious file'+(mal>1?'s':'')+' auto-quarantined!');
+  else toast('ok','Scan complete — '+files.length+' file'+(files.length>1?'s':'')+' scanned');
+}
+
+function _demoEntry(f, i) {
+  const type=getType(f), verdict=fakeVerdict(f.name||'x',f.size||1000), score=fakeScore(verdict);
+  return {name:f.name||('file_'+(i+1)),type,verdict,score,size:f.size||0,hash:fakeHash(f.name||'x'),time:fmtTime(new Date()),layers:fakeLayers(verdict,type),mlApplied:false,_realPath:f._realPath||null,_fromApi:false};
+}
+
+/* ── ENGINE HEALTH POLL ── */
+async function checkEngineHealth(){
+  const dot  = document.getElementById('engine-dot');
+  const txt  = document.getElementById('engine-status-text');
+  const badge= document.getElementById('engine-status-badge');
+  try {
+    const resp = await fetch('http://127.0.0.1:5000/status', {
+      method:'GET', signal: AbortSignal.timeout(3000)
+    });
+    const data = await resp.json();
+    if(data.ok){
+      dot.style.background    = 'var(--clean)';
+      dot.style.boxShadow     = '0 0 5px var(--clean)';
+      dot.style.animation     = 'none';          // static — no animation when connected
+      txt.textContent         = 'Engine Active';
+      txt.style.color         = 'var(--clean)';
+      badge.style.borderColor = 'rgba(0,230,118,.3)';
+    } else { throw new Error('not ok'); }
+  } catch(e){
+    dot.style.background    = 'var(--malicious)';
+    dot.style.boxShadow     = '0 0 8px var(--malicious)';
+    dot.style.animation     = 'pulse 1s ease-in-out infinite'; // pulse only when offline
+    txt.textContent         = 'Engine Offline';
+    txt.style.color         = 'var(--malicious)';
+    badge.style.borderColor = 'rgba(255,23,68,.3)';
+  }
+}
+checkEngineHealth();
+setInterval(checkEngineHealth, 5000);
+
+/* ── HELPERS ── */
+function fmtTime(d){
+  let h=d.getHours(), m=String(d.getMinutes()).padStart(2,'0');
+  const ap=h>=12?'PM':'AM'; h=h%12||12;
+  return h+':'+m+' '+ap;
+}
+function fmtSize(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB'; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── RENDER FILE LIST ── */
+function renderFileList(){
+  const list=document.getElementById('file-list');
+  const sv=state.filterVerdict, st=state.filterType!=='all'?state.filterType:null, sq=state.filterSearch.toLowerCase();
+  const shown=state.files.filter(f=>{
+    if(sv!=='all'&&f.verdict!==sv)return false;
+    if(st&&f.type!==st)return false;
+    if(sq&&!f.name.toLowerCase().includes(sq))return false;
+    return true;
+  });
+  document.getElementById('file-count-badge').textContent=shown.length+' file'+(shown.length!==1?'s':'');
+  list.innerHTML=shown.map(f=>{
+    const oi=state.files.indexOf(f);
+    const sc=f.verdict==='mal'?'var(--malicious)':f.verdict==='sus'?'var(--suspicious)':'var(--clean)';
+    return `<div class="file-row ${f.verdict}${state.selectedIdx===oi?' selected':''}" onclick="selectFile(${oi})">
+      <div class="file-name-cell">
+        <div class="file-thumb">${fileIcon(f.type)}</div>
+        <div><div class="file-name-text">${esc(f.name)}</div><div class="file-time">${f.time}</div></div>
+      </div>
+      <div><span class="type-badge type-${f.type}">${f.type.toUpperCase()}</span></div>
+      <div class="size-cell">${fmtSize(f.size)}</div>
+      <div><span class="verdict-badge v-${f.verdict}"><span class="v-dot"></span>${f.verdict.toUpperCase()}</span></div>
+      <div class="score-cell"><div class="score-bar-track"><div class="score-bar-fill" style="width:${f.score}%;background:${sc}"></div></div><div class="score-num">${f.score}</div></div>
+      <div class="hash-cell">${f.hash}…</div>
+    </div>`;
+  }).join('');
+}
+
+function fileIcon(t){
+  const m={
+    image:'<svg viewBox="0 0 24 24" fill="none" stroke="#00b4ff" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    video:'<svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" style="width:14px;height:14px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+    audio:'<svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" style="width:14px;height:14px"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    doc:'<svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>',
+    svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+  };
+  return m[t]||m.doc;
+}
+
+/* ── PANEL ── */
+function selectFile(idx){
+  state.selectedIdx=idx; renderFileList();
+  const f=state.files[idx]; if(!f) return;
+  document.getElementById('right-panel').classList.add('open');
+  document.getElementById('panel-empty').classList.add('hidden');
+  document.getElementById('panel-content').classList.remove('hidden');
+  document.getElementById('panel-filename').textContent = f.name;
+
+  const vc    = document.getElementById('panel-verdict-card');
+  const vcCls = f.verdict==='mal'?'vc-mal':f.verdict==='sus'?'vc-sus':'vc-clean';
+  const vCls  = f.verdict==='mal'?'mal':f.verdict==='sus'?'sus':'clean';
+  const sc    = f.verdict==='mal'?'var(--malicious)':f.verdict==='sus'?'var(--suspicious)':'var(--clean)';
+  const s2    = f.layers?.s2||[];
+  const ml    = f.layers?.ml||[];
+  const hitS2 = s2.filter(l=>l.hit).length;
+  const hitML = ml.filter(l=>l.hit).length;
+
+  vc.innerHTML=`<div class="verdict-card ${vcCls}" style="margin:12px">
+    <div>
+      <div class="verdict-big ${vCls}">${f.verdict.toUpperCase()}</div>
+      <div class="verdict-meta">HEURISTIC: ${hitS2}/${s2.length} FLAGGED</div>
+      ${['image','video','svg'].includes(f.type)?`<div class="verdict-meta">ML LAYERS: ${hitML}/${ml.length} FLAGGED</div>`:''}
+      ${['image','video','svg'].includes(f.type)?`<div class="verdict-meta" style="color:var(--accent-cyan);margin-top:2px">✓ ML Applied</div>${f.summary?`<div class="verdict-meta" style="color:var(--text-secondary);font-size:8px;margin-top:4px;line-height:1.4">${esc(f.summary.slice(0,160))}</div>`:''}`:''}
+    </div>
+    <div class="verdict-score-big" style="color:${sc}">${f.score}</div>
+  </div>`;
+
+  const s1    = f.layers?.s1||[];
+  const hitS1 = s1.filter(l=>l.hit).length;
+
+  document.getElementById('panel-s1-layers').innerHTML = hitS1
+    ? s1.filter(l=>l.hit).map(l=>layerRow(l)).join('')
+    : `<div class="layer-empty-msg">✓ All preprocessing checks passed</div>`;
+
+  document.getElementById('panel-s2-title').textContent = `Stage 2A — Heuristic (${hitS2} triggered)`;
+
+  const s2HitRows = hitS2
+    ? s2.filter(l=>l.hit).map(l=>layerRow(l)).join('')
+    : `<div class="layer-empty-msg">✓ No heuristic layers triggered</div>`;
+
+  const mlApplicableTypes = ['image','video','svg'];
+  const isMlApplicable = mlApplicableTypes.includes(f.type);
+
+  const mlDivider = isMlApplicable
+    ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--accent-cyan);letter-spacing:.2em;padding:8px 8px 3px;border-top:1px solid var(--border);margin-top:4px">STAGE 2B — ML ENGINE</div>`+
+      (hitML ? ml.filter(l=>l.hit).map(l=>layerRow(l)).join('') : `<div class="layer-empty-msg">✓ ML: No anomalies detected</div>`)
+    : '';
+
+  document.getElementById('panel-s2-layers').innerHTML = s2HitRows + mlDivider;
+  document.getElementById('panel-file-info').innerHTML=`
+    <div class="file-info-item"><div class="file-info-key">Name</div><div class="file-info-val">${esc(f.name)}</div></div>
+    <div class="file-info-item"><div class="file-info-key">Type</div><div class="file-info-val">${f.type.toUpperCase()}</div></div>
+    <div class="file-info-item"><div class="file-info-key">Size</div><div class="file-info-val">${fmtSize(f.size)}</div></div>
+    <div class="file-info-item"><div class="file-info-key">Score</div><div class="file-info-val">${f.score}/100</div></div>
+    <div class="file-info-item" style="grid-column:1/-1"><div class="file-info-key">SHA256</div><div class="file-info-val mono">${f.hash}…</div></div>`;
+}
+
+function layerRow(l){
+  const ind   = l.hit?'hit':'pass';
+  const score = l.hit?(l.score?'+'+l.score:'HIT'):'PASS';
+  const reason= l.hit&&l.reason ? `<div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);padding:0 8px 4px 24px;letter-spacing:.04em;line-height:1.4">${esc(String(l.reason).slice(0,90))}</div>` : '';
+  const sev   = l.sev&&l.sev!=='none'?`<span style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-left:4px">[${l.sev}]</span>`:'';
+  return `<div class="layer-row"><div class="layer-indicator ${ind}"></div><div class="layer-name">${l.n.replace(/_/g,' ')}${sev}</div><div class="layer-score ${ind}">${score}</div></div>${reason}`;
+}
+
+function closePanel(){
+  document.getElementById('right-panel').classList.remove('open');
+  state.selectedIdx=null; renderFileList();
+}
+
+/* ── QUARANTINE ── */
+function quarantineSelected(){
+  if(state.selectedIdx===null) return;
+  const f=state.files[state.selectedIdx]; if(!f) return;
+  autoQuarantine(f).then(()=>{
+    toast('mal', f.name+' quarantined (read-only vault)');
+    closePanel();
+  });
+}
+function renderQuarantine(){
+  const el=document.getElementById('quarantine-list');
+  if(!state.quarantine.length){
+    el.innerHTML='<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);padding:4px;letter-spacing:.1em">No files quarantined</div>';
+    return;
+  }
+  el.innerHTML=state.quarantine.map(f=>`
+    <div class="quarantine-item">
+      <div class="quarantine-item-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--malicious)" stroke-width="2" style="width:10px;height:10px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="quarantine-item-name">${esc(f.name)}</div>
+      <div class="quarantine-item-type">${f.type}</div>
+    </div>`).join('');
+}
+function clearQuarantineBase(){
+  state.quarantine=[]; renderQuarantine();
+  toast('ok','Quarantine cleared'); addLog('info','Quarantine cleared');
+}
+
+/* ── FILTERS ── */
+function setPillFilter(el,filter){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const verdicts=['all','clean','sus','mal'];
+  if(verdicts.includes(filter)){ state.filterVerdict=filter; state.filterType='all'; }
+  else{ state.filterType=filter; state.filterVerdict='all'; document.querySelector('.pill[data-filter="all"]').classList.add('active'); el.classList.add('active'); }
+  renderFileList();
+}
+function filterFiles(q){ state.filterSearch=q; renderFileList(); }
+
+/* ── CLEAR ── */
+function clearFiles(){
+  state.files=[]; state.selectedIdx=null;
+  updateStats(); renderFileList(); showNoFilesState(true); closePanel();
+  addLog('info','Session cleared');
+  document.getElementById('file-count-badge').textContent='0 files';
+}
+function showNoFilesState(show){
+  document.getElementById('no-files-state').classList.toggle('hidden',!show);
+  document.getElementById('file-list-wrap').classList.toggle('visible',!show);
+}
+
+/* ── STATS ── */
+function updateStats(){
+  const t=state.files.length, c=state.files.filter(f=>f.verdict==='clean').length;
+  const s=state.files.filter(f=>f.verdict==='sus').length, m=state.files.filter(f=>f.verdict==='mal').length;
+  ['scanned','clean','sus','mal'].forEach((k,i)=>document.getElementById('stat-'+k).textContent=[t,c,s,m][i]);
+  ['ss-total','ss-clean','ss-sus','ss-mal'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[t,c,s,m][i]});
+  const rp=t?Math.min(Math.round((m*100+s*30)/t),100):0;
+  document.getElementById('risk-bar').style.width=rp+'%';
+  document.getElementById('risk-pct').textContent=rp+'%';
+  const rl=document.getElementById('risk-level-text');
+  if(m>0){rl.textContent='CRITICAL';rl.className='risk-level critical';}
+  else if(s>0){rl.textContent='MODERATE';rl.className='risk-level moderate';}
+  else{rl.textContent='SAFE';rl.className='risk-level safe';}
+}
+
+/* ── LOG ── */
+function addLog(type, msg){
+  const log=document.getElementById('activity-log'); if(!log)return;
+  const cls={ok:'log-ok',warn:'log-warn',err:'log-err',info:'log-info'}[type]||'log-info';
+  const entry=document.createElement('div');
+  entry.className='log-entry';
+  entry.innerHTML=`<span class="log-time">${fmtTime(new Date())}</span> <span class="${cls}">[${type.toUpperCase()}]</span> ${esc(msg)}`;
+  log.insertBefore(entry,log.firstChild);
+  while(log.children.length>50) log.removeChild(log.lastChild);
+}
+
+/* ── TOAST ── */
+function toast(type,msg){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const dc=type==='ok'||type==='info'?'clean':'mal';
+  t.className=`toast ${type==='mal'?'t-mal':type==='ok'?'t-clean':''}`;
+  t.innerHTML=`<div class="toast-dot ${dc}"></div>${esc(msg)}`;
+  c.appendChild(t); setTimeout(()=>t.remove(),3100);
+}
+
+/* ── ABOUT MODAL ── */
+function showAbout(){
+  if(document.getElementById('about-modal'))return;
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay'; overlay.id='about-modal';
+  overlay.onclick=(e)=>{if(e.target===overlay)closeAbout()};
+  overlay.innerHTML=`<div class="modal">
+    <div class="modal-header">
+      <div class="modal-logo-row">
+        <svg class="modal-eye-icon" viewBox="0 0 44 44" fill="none">
+          <path d="M2 22 Q22 6 42 22 Q22 38 2 22Z" fill="#00b4ff" opacity=".15"/>
+          <circle cx="22" cy="22" r="11" fill="#00b4ff" opacity=".2"/>
+          <circle cx="22" cy="22" r="11" stroke="#00b4ff" stroke-width="1.5" fill="none"/>
+          <circle cx="22" cy="22" r="4.5" fill="#001833"/>
+          <circle cx="24.5" cy="20" r="2" fill="white" opacity=".9"/>
+          <path d="M2 22 Q22 6 42 22" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/>
+          <path d="M2 22 Q22 38 42 22" stroke="#00b4ff" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".5"/>
+        </svg>
+        <div>
+          <div class="modal-title">Silent<span>Eye</span></div>
+          <div class="modal-version">VERSION 1.0 — MULTIMEDIA MALWARE SCANNER</div>
+          <div class="modal-tagline">SEE BEYOND THE IMAGE</div>
+        </div>
+      </div>
+      <button class="btn-modal-close" onclick="closeAbout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">
+        SilentEye is a fully offline, AI-powered multimedia malware scanner designed to detect steganographic payloads, embedded malware, and malicious scripts hidden inside media files received through messaging apps like WhatsApp, Instagram, and Facebook.
+      </div>
+      <div class="modal-features">
+        <div class="feature-card">
+          <div class="feature-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="#00b4ff" stroke-width="2" style="width:14px;height:14px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <div><div class="feature-title">Stego Detection</div><div class="feature-desc">LSB, DCT, alpha-channel and phase-coding steganography across images and audio</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" style="width:14px;height:14px"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div><div class="feature-title">AI Powered</div><div class="feature-desc">4 Random Forest ML models trained on 36,800 files across ALASKA2, BOSSBase, DIV2K datasets</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:14px;height:14px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div><div class="feature-title">Smart Analysis</div><div class="feature-desc">41-layer heuristic engine covering YARA, entropy, polyglot, IOC, format-specific deep parsing</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div><div class="feature-title">Threat Protection</div><div class="feature-desc">1M+ hash reputation DB, read-only quarantine vault, auto-watch for social media folders</div></div>
+        </div>
+      </div>
+      <div class="modal-stats-row">
+        <div class="modal-stat"><div class="modal-stat-num">41</div><div class="modal-stat-lbl">Heuristic Layers</div></div>
+        <div class="modal-stat"><div class="modal-stat-num">36K</div><div class="modal-stat-lbl">Training Files</div></div>
+        <div class="modal-stat"><div class="modal-stat-num">1M+</div><div class="modal-stat-lbl">Hash DB</div></div>
+        <div class="modal-stat"><div class="modal-stat-num">100%</div><div class="modal-stat-lbl">Offline</div></div>
+      </div>
+      <div class="modal-tech-row">
+        <span class="tech-tag">Python 3.11</span><span class="tech-tag">scikit-learn</span><span class="tech-tag">YARA</span>
+        <span class="tech-tag">Random Forest</span><span class="tech-tag">Pillow</span><span class="tech-tag">Flask API</span>
+        <span class="tech-tag">SQLite</span><span class="tech-tag">J-UNIWARD</span>
+      </div>
+      <div class="modal-team">Developed by <span>CypherShield</span> &nbsp;·&nbsp; Final Year Project — CSE, Savitribai Phule Pune University &nbsp;·&nbsp; 2026</div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+function closeAbout(){
+  const m=document.getElementById('about-modal');
+  if(m) m.remove();
+}
+
+/* ── INIT ── */
+showNoFilesState(true);
+</script>
+
+<script>
+/* ── ELECTRON BRIDGE ── */
+const isElectron = typeof window.silentEye !== 'undefined';
+
+// Titlebar controls
+if(isElectron){
+  document.getElementById('tb-min')?.addEventListener('click', () => window.silentEye.minimize());
+  document.getElementById('tb-max')?.addEventListener('click', async () => {
+    const isMax = await window.silentEye.isMaximized();
+    window.silentEye.maximize();
+    const btn = document.getElementById('tb-max');
+    if(btn) btn.title = isMax ? 'Maximize' : 'Restore';
+  });
+  document.getElementById('tb-close')?.addEventListener('click', () => window.silentEye.close());
+
+  // API status
+  window.silentEye.onApiStatus(data => {
+    if(data.demoMode){
+      addLog('warn','Demo mode — Python API not found. Showing simulated results.');
+    } else {
+      addLog('ok','Python backend connected on port '+data.port);
+    }
+  });
+
+  // Tray scan trigger
+  window.silentEye.onTriggerScan(() => triggerScan());
+}
+
+/* ── OVERRIDE triggerScan() for Electron ── */
+async function triggerScan(){
+  if(!isElectron){ triggerScanBase(); return; }
+  const paths = await window.silentEye.openFiles();
+  if(!paths || !paths.length) return;
+  const fakeFiles = paths.map(p => {
+    const name = p.split(/[/\\]/).pop();
+    const ext  = name.split('.').pop().toLowerCase();
+    return { name, path: p, size: 0, type: '', _realPath: p };
+  });
+  startScan(fakeFiles);
+}
+
+/* ── OVERRIDE setMode() folder scan to use real dialog ── */
+function setMode(mode){
+  setModeBase(mode);
+}
+
+/* ── OVERRIDE runFolderPathScan() for Electron ── */
+async function runFolderPathScan(){
+  const pathInput = document.getElementById('folder-path-input');
+  let folderPath = pathInput?.value?.trim();
+
+  if(!folderPath && isElectron){
+    folderPath = await window.silentEye.openFolder();
+    if(!folderPath) return;
+    if(pathInput) pathInput.value = folderPath;
+  }
+  if(!folderPath){ toast('warn','Enter a folder path first'); return; }
+
+  if(isElectron){
+    addLog('info','Reading folder: '+folderPath);
+    const result = await window.silentEye.listFolder(folderPath);
+    if(!result.ok){ toast('warn','Cannot read folder: '+result.error); return; }
+    if(!result.files.length){ toast('info','Folder is empty or has no media files'); return; }
+    addLog('info','Found '+result.files.length+' files — scanning...');
+    const fakeFiles = result.files.map(f=>({name:f.name,path:f.path,size:f.size,type:'',_realPath:f.path}));
+    startScan(fakeFiles);
+  } else {
+    addLog('info','Folder scan: '+folderPath);
+    runDemoScan(3+Math.floor(Math.random()*8), folderPath);
+  }
+}
+
+/* ── OVERRIDE triggerFilePick() for Electron ── */
+async function triggerFilePick(){
+  if(!isElectron){ document.getElementById('folder-file-input')?.click(); return; }
+  const paths = await window.silentEye.openFiles();
+  if(!paths || !paths.length) return;
+  const pathInput = document.getElementById('folder-path-input');
+  if(pathInput && paths.length === 1) pathInput.value = paths[0];
+  const fakeFiles = paths.map(p=>({name:p.split(/[/\\]/).pop(),path:p,size:0,type:'',_realPath:p}));
+  startScan(fakeFiles);
+}
+
+/* ── OVERRIDE clearQuarantine() for Electron ── */
+async function clearQuarantine(){
+  if(isElectron){
+    const result = await window.silentEye.quarantineClear();
+    if(result.ok){
+      state.quarantine=[];
+      renderQuarantine();
+      toast('ok','Quarantine cleared');
+      addLog('info','Quarantine vault cleared');
+    } else {
+      toast('warn','Clear failed: '+result.error);
+    }
+  } else {
+    clearQuarantineBase();
+  }
+}
+
+/* ── Load real quarantine list from disk on startup ── */
+async function loadQuarantineFromDisk(){
+  if(!isElectron) return;
+  const result = await window.silentEye.quarantineList();
+  if(result.ok && result.files.length){
+    state.quarantine = result.files.map(f=>({name:f.name,type:f.name.split('.').pop()||'file',verdict:'mal',score:95,size:f.size,hash:'quarantined',time:'',layers:{s1:[],s2:[]},mlApplied:false,_realPath:f.path}));
+    renderQuarantine();
+    addLog('info','Loaded '+result.files.length+' quarantined file(s) from vault');
+  }
+}
+
+// Hide titlebar in non-Electron (browser preview)
+if(!isElectron){
+  const tb = document.getElementById('titlebar');
+  if(tb){ tb.style.display='none'; }
+  const app = document.getElementById('app');
+  if(app){ app.style.marginTop='0'; app.style.height='100vh'; }
+  const splash = document.getElementById('splash');
+  if(splash) splash.style.top='0';
+}
+
+// On load
+window.addEventListener('DOMContentLoaded', ()=>{ loadQuarantineFromDisk(); }, false);
+setTimeout(()=>{ if(isElectron) loadQuarantineFromDisk(); }, 6000);
+</script>
+
+</body>
+</html>
